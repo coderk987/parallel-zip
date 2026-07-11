@@ -1,14 +1,13 @@
 #include <bits/stdc++.h>
+#include "tree.h"
 
 using namespace std;
 
-struct TreeNode{
+/*struct TreeNode{
     char val;
     TreeNode *right;
     TreeNode *left;
 };
-
-vector<pair<int, char>> txtdata;
 
 TreeNode* makeTree(int l,int r){
     if(l==r){
@@ -33,7 +32,7 @@ void dfs(TreeNode *root){
     cout<<root->val<<" ";
     dfs(root->right);
     dfs(root->left);
-}
+}*/
 
 int main(){
     string s = "hellowowowo";
@@ -42,7 +41,7 @@ int main(){
     for(char &c: s){
         freq[static_cast<int>(c)]++;
     }
-
+    vector<pair<int, char>> txtdata;
     for(int i=0;i<256;i++){
         if(freq[i]>0){
             pair<int,int> p = {freq[i], static_cast<char>(i)};
@@ -55,16 +54,10 @@ int main(){
         cout<<x.second<<"=>"<<x.first<<endl;
     }
 
-    TreeNode *root = makeTree(0, txtdata.size()-1);
+    TreeNode *root = makeTree(0, txtdata.size()-1, txtdata);
 
-    dfs(root);
-
-    //read file
-    //make tree
-    //encode using tree to a binary file
-    //convert binary file to text
-    //add tree as header to new text file
-    
+    debug_dfs(root);
+    cout<<endl;
 
     return 0;
 }
