@@ -12,10 +12,12 @@ int splitidx(std::vector<std::pair<int,char>> &txtdata, int l, int r){
             return i;
         }
     }
+    
     return (l+r)/2;
 }
 
 TreeNode* makeTree(int l,int r, std::vector<std::pair<int,char>> &txtdata){
+    if (l > r) return nullptr;
     if(l==r){
         TreeNode *node = new TreeNode;
         node->val = txtdata[l].second;

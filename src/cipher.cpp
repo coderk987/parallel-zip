@@ -1,6 +1,8 @@
 #include "tree.h"
 #include "cipher.h"
 #include <bits/stdc++.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 using namespace std;
 
@@ -8,6 +10,7 @@ map<char, string> encodeCipher;
 map<string, char> decodeCipher;
 
 void createCipher(TreeNode* root,string path, bool isEncode){
+    if(root == nullptr) return;
     if(root->right==nullptr && root->left==nullptr){
         if(isEncode) encodeCipher[root->val]=path;
         else decodeCipher[path]=root->val;
@@ -18,24 +21,26 @@ void createCipher(TreeNode* root,string path, bool isEncode){
     createCipher(root->right, path+"1", isEncode);
 }
 
-string encodeFile(string s, TreeNode* root){
+void encodeFile(string s, TreeNode* root){
     createCipher(root, "", true);
 
     string bincode="";
-    for(char c: s) bincode+=encodeCipher[c];
+    int fd = open(s.c_str(), O_RDONLY);
+    char c;
+    while(read(fd, &c, 1) > 0) bincode+=encodeCipher[c];
 
     int padding = (8 - bincode.length() % 8) % 8;
     for(int i=0;i<padding;i++) bincode+='0';
-    string txt = "";
+
+    int fdw = open("comp.txt", O_WRONLY | O_CREAT, 0644);
     for(int i=0;i<bincode.length();i+=8){
         string binint = "";
         for(int j=0;j<8;j++){
             binint+=bincode[i+j];
         }
         char c = static_cast<char>(std::stoi(binint, nullptr, 2));
-        txt+=c;
+        write(fdw, &c, 1);
     }
-    return txt;
 }
 
 string decodeFile(string s, TreeNode* root, int len){

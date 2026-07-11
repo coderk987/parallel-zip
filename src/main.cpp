@@ -1,17 +1,21 @@
 #include <bits/stdc++.h>
 #include "tree.h"
 #include "cipher.h"
+#include <unistd.h>
+#include <fcntl.h>
 
 using namespace std;
 
-int main(){
-    string s = "hellowowowo";
+const string filePath = "sample/hi.txt";
 
+void getData(vector<pair<int, char>> &txtdata){
     vector<int> freq(256,0);
-    for(char &c: s){
+    char c;
+    int fd = open(filePath.c_str(), O_RDONLY);
+    while(read(fd, &c, 1) > 0){
         freq[static_cast<int>(c)]++;
     }
-    vector<pair<int, char>> txtdata;
+
     for(int i=0;i<256;i++){
         if(freq[i]>0){
             pair<int,int> p = {freq[i], static_cast<char>(i)};
@@ -20,18 +24,14 @@ int main(){
     }
     
     sort(txtdata.begin(), txtdata.end());
-    for(auto &x: txtdata){
-        cout<<x.second<<"=>"<<x.first<<endl;
-    }
+}
 
+int main(){
+    vector<pair<int, char>> txtdata;
+    getData(txtdata);
     TreeNode *root = makeTree(0, txtdata.size()-1, txtdata);
     debug_dfs(root);
-    cout<<endl;
-
-    string zip = encodeFile(s, root);
-    cout<<zip<<endl;
-    string unzip = decodeFile(zip, root, s.length());
-    cout<<unzip<<endl;
+    encodeFile(filePath, root);
 
     return 0;
 }
