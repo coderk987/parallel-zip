@@ -1,38 +1,8 @@
 #include <bits/stdc++.h>
 #include "tree.h"
+#include "cipher.h"
 
 using namespace std;
-
-/*struct TreeNode{
-    char val;
-    TreeNode *right;
-    TreeNode *left;
-};
-
-TreeNode* makeTree(int l,int r){
-    if(l==r){
-        TreeNode *node = new TreeNode;
-        node->val = txtdata[l].second;
-        node->right = nullptr;
-        node->left = nullptr;
-        return node;
-    }
-
-    int mid = (l+r)/2; //temporary incorrect split
-    TreeNode *root = new TreeNode;
-    root->val = '*'; //temporary
-    root->left = makeTree(l, mid);
-    root->right = makeTree(mid+1, r);
-    return root;
-}
-
-void dfs(TreeNode *root){
-    if(root==nullptr) return;
-
-    cout<<root->val<<" ";
-    dfs(root->right);
-    dfs(root->left);
-}*/
 
 int main(){
     string s = "hellowowowo";
@@ -55,9 +25,13 @@ int main(){
     }
 
     TreeNode *root = makeTree(0, txtdata.size()-1, txtdata);
-
     debug_dfs(root);
     cout<<endl;
+
+    string zip = encodeFile(s, root);
+    cout<<zip<<endl;
+    string unzip = decodeFile(zip, root, s.length());
+    cout<<unzip<<endl;
 
     return 0;
 }
