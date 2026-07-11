@@ -59,5 +59,12 @@ int main(){
 
     dfs(root);
 
+    //read file
+    //make tree
+    //encode using tree to a binary file
+    //convert binary file to text
+    //add tree as header to new text file
+    
+
     return 0;
 }
