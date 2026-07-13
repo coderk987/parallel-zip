@@ -32,6 +32,11 @@ int main(){
     TreeNode *root = makeTree(0, txtdata.size()-1, txtdata);
     debug_dfs(root);
     encodeFile(filePath, root);
-
+    string serial;
+    serializeTree(root, serial);
+    cout<<endl<<serial<<endl;
+    int idx=1;
+    TreeNode *test = deserializeTree(serial, idx);
+    //debug_dfs(test);
     return 0;
 }

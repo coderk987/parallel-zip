@@ -41,3 +41,28 @@ void debug_dfs(TreeNode *root){
     debug_dfs(root->right);
     debug_dfs(root->left);
 }
+
+void serializeTree(TreeNode *root, std::string &serial){
+    if(root==nullptr){
+        serial+="1N";
+        return;
+    }
+    serial+='0';
+    serial+=root->val;
+    serializeTree(root->left, serial);
+    serializeTree(root->right, serial);
+}
+
+TreeNode* deserializeTree(std::string serial, int &idx){
+    //std::cout<<"I am at "<<idx<<std::endl;
+    if(serial[idx-1]=='1'){
+        idx+=2;
+        return nullptr;
+    }
+    TreeNode* node = new TreeNode;
+    node->val = serial[idx];
+    idx+=2;
+    node->left = deserializeTree(serial, idx);
+    node->right = deserializeTree(serial, idx);
+    return node;
+}
