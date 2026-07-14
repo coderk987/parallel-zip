@@ -1,5 +1,6 @@
 #include "tree.h"
 #include <bits/stdc++.h>
+#include <string>
 
 int splitidx(std::vector<std::pair<int,char>> &txtdata, int l, int r){
     int sum = 0;
@@ -53,8 +54,9 @@ void serializeTree(TreeNode *root, std::string &serial){
     serializeTree(root->right, serial);
 }
 
-TreeNode* deserializeTree(std::string serial, int &idx){
-    //std::cout<<"I am at "<<idx<<std::endl;
+/*TreeNode* deserializeTree(std::string serial, int &idx){
+    //std::cout << "idx=" << idx << " size=" << serial.size() << std::endl;
+    if (idx >= serial.size()) return nullptr;
     if(serial[idx-1]=='1'){
         idx+=2;
         return nullptr;
@@ -64,5 +66,25 @@ TreeNode* deserializeTree(std::string serial, int &idx){
     idx+=2;
     node->left = deserializeTree(serial, idx);
     node->right = deserializeTree(serial, idx);
+    return node;
+}*/
+
+TreeNode* deserializeTree(std::string serial, int& idx) {
+    // Malformed input
+    if (idx >= serial.size())
+        return nullptr;
+
+    char marker = serial[idx++];
+
+    if (marker == '1') {
+        idx++;          // Skip the 'N'
+        return nullptr;
+    }
+
+    TreeNode* node = new TreeNode;
+    node->val = serial[idx++];
+    node->left = deserializeTree(serial, idx);
+    node->right = deserializeTree(serial, idx);
+
     return node;
 }

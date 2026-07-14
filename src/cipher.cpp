@@ -3,6 +3,8 @@
 #include <bits/stdc++.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "bitio.h"
+#include <sys/xattr.h>
 
 using namespace std;
 
@@ -24,43 +26,62 @@ void createCipher(TreeNode* root,string path, bool isEncode){
 void encodeFile(string s, TreeNode* root){
     createCipher(root, "", true);
 
-    string bincode="";
-    int fd = open(s.c_str(), O_RDONLY);
+    int fdr = open(s.c_str(), O_RDONLY);
     char c;
-    while(read(fd, &c, 1) > 0) bincode+=encodeCipher[c];
-
-    int padding = (8 - bincode.length() % 8) % 8;
-    for(int i=0;i<padding;i++) bincode+='0';
-
     int fdw = open("comp.txt", O_WRONLY | O_CREAT, 0644);
-    for(int i=0;i<bincode.length();i+=8){
-        string binint = "";
-        for(int j=0;j<8;j++){
-            binint+=bincode[i+j];
+    //cout << fdr << " " << fdw << endl;
+    BitWriter bw(fdw);
+    int writes = 0;
+    while(read(fdr, &c, 1) > 0) {
+        for(char &c:encodeCipher[c]){
+            writes++;
+            bw.writeBit((c=='1'));
         }
-        char c = static_cast<char>(std::stoi(binint, nullptr, 2));
-        write(fdw, &c, 1);
     }
+
+    //cout<<"wrote bits\n";
+    int padding = (8 - writes % 8) % 8;
+    for(int i=0;i<padding;i++){
+        bw.writeBit(0);
+    }
+
+    string treestr;
+    serializeTree(root, treestr);
+    setxattr("comp.txt", "user.comp.tree", treestr.data(), treestr.size(), 0);
+    setxattr("comp.txt", "user.comp.writes", &writes, sizeof(writes), 0);
+    //cout<<"encoded\n";
 }
 
-string decodeFile(string s, TreeNode* root, int len){
+void decodeFile(string filepath){
+    ssize_t treeSize = getxattr(filepath.data(), "user.comp.tree", NULL, 0);
+    string treestr(treeSize, '\0'); 
+    getxattr(filepath.data(), "user.comp.tree", treestr.data(), treestr.size());
+    int writes;
+    getxattr(filepath.data(), "user.comp.writes", &writes, sizeof(writes));
+    //cout<<"got attr\n";
+    int idxtmp = 0;
+    TreeNode* root = deserializeTree(treestr, idxtmp);
     createCipher(root, "", false);
-    string bincode = "";
-    for(auto c:s){
-        string binint = bitset<8>(c).to_string();
-        bincode+=binint;
-    }
-
-    string txt = "";
+    //cout<<"cipher+tree done\n";
+    int fdr = open("comp.txt", O_RDONLY);
     string cur = "";
-    for(auto c:bincode){
-        if(txt.length()==len) break;
-        cur+=c;
+    int curbit;
+    BitReader br(fdr);
+    int curreads = 0;
+    int fdw = open("./og.txt", O_WRONLY | O_CREAT, 0644);
+    //cout << fdr << " " << fdw << endl;
+    //cout<<"\nwrites: "<<writes<<endl;
+    while((curbit=br.readBit()) >= 0){
+        cur+=(curbit==1 ? '1' :'0');
+        //cout << curreads << " " << curbit << " " << cur << endl;
         if(decodeCipher.contains(cur)){
-            txt+=decodeCipher[cur];
+            char decoded_cur = decodeCipher[cur];
+            //cout<<"decoding "<<decoded_cur<<endl;
+            write(fdw, &decoded_cur, 1);
             cur="";
         }
+        if(curreads==writes) break;
+        curreads++;
     }
-
-    return txt;
+    //cout<<"decoded\n";
 }

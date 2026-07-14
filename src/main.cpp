@@ -3,15 +3,14 @@
 #include "cipher.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/xattr.h>
 
 using namespace std;
 
-const string filePath = "sample/hi.txt";
-
-void getData(vector<pair<int, char>> &txtdata){
+void getData(vector<pair<int, char>> &txtdata,string filepath){
     vector<int> freq(256,0);
     char c;
-    int fd = open(filePath.c_str(), O_RDONLY);
+    int fd = open(filepath.c_str(), O_RDONLY);
     while(read(fd, &c, 1) > 0){
         freq[static_cast<int>(c)]++;
     }
@@ -26,17 +25,26 @@ void getData(vector<pair<int, char>> &txtdata){
     sort(txtdata.begin(), txtdata.end());
 }
 
-int main(){
+void zip(string filepath){
     vector<pair<int, char>> txtdata;
-    getData(txtdata);
+    getData(txtdata, filepath);
     TreeNode *root = makeTree(0, txtdata.size()-1, txtdata);
-    debug_dfs(root);
-    encodeFile(filePath, root);
-    string serial;
-    serializeTree(root, serial);
-    cout<<endl<<serial<<endl;
-    int idx=1;
-    TreeNode *test = deserializeTree(serial, idx);
-    //debug_dfs(test);
+    encodeFile(filepath, root);
+}
+
+void unzip(string filepath){
+    decodeFile(filepath);
+}
+
+int main(int argc, char* argv[]){
+    if(argc < 3) return 0;
+
+    string cmnd = argv[1];
+    if(cmnd == "zip"){
+        zip(argv[2]);
+    }else if(cmnd =="unzip"){
+        unzip(argv[2]);
+    }
+
     return 0;
 }
