@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 using namespace std;
 
@@ -42,16 +43,25 @@ void unzip(string srcPath, string dstPath){
     decodeFile(srcPath, dstPath);
 }
 
+struct Task{
+    string cmnd;
+    string srcPath;
+    string dstPath;
+};
+
+queue<struct Task> tasks;
+pthread_mutex_t locker = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
 void dirDfs(string srcPath, string dstPath, string cmnd){
     DIR *dir = opendir(srcPath.c_str());
 
     // Base case -> regular file
     if(dir == NULL){
-        if(cmnd == "zip"){
-            zip(srcPath, dstPath);
-        }else{
-            unzip(srcPath, dstPath);
-        }
+        pthread_mutex_lock(&locker);
+        tasks.push({cmnd, srcPath, dstPath});
+        pthread_cond_signal(&cond);
+        pthread_mutex_unlock(&locker);
         return;
     }
 
@@ -75,6 +85,34 @@ void dirDfs(string srcPath, string dstPath, string cmnd){
     closedir(dir);
 }
 
+bool producing = true;
+
+void* routine(void* arg){
+    while(true){
+        pthread_mutex_lock(&locker);
+
+        while(tasks.empty() && producing) pthread_cond_wait(&cond, &locker); 
+        if(tasks.empty() && !producing) {
+            pthread_mutex_unlock(&locker);
+            break;
+        }
+
+        Task top = tasks.front();
+        tasks.pop();
+
+        pthread_mutex_unlock(&locker);
+
+        if(top.cmnd == "zip"){
+            zip(top.srcPath, top.dstPath);
+        }else{
+            unzip(top.srcPath, top.dstPath);
+        }
+
+    }
+
+    return nullptr;
+}
+
 int main(int argc, char* argv[]){
     if(argc < 3)
         return 0;
@@ -95,7 +133,16 @@ int main(int argc, char* argv[]){
 
     mkdir(outputPath.c_str(), 0755);
 
+    pthread_t ths[8];
+    for(int i=0;i<8;i++) pthread_create(ths+i, NULL, &routine, NULL);
+
     dirDfs(inputPath, outputPath, cmnd);
+    pthread_mutex_lock(&locker);
+    producing = false;
+    pthread_cond_broadcast(&cond);
+    pthread_mutex_unlock(&locker);
+
+    for(int i=0;i<8;i++) pthread_join(ths[i], nullptr);
 
     return 0;
 }
